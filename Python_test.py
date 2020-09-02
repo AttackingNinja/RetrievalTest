@@ -36,17 +36,23 @@ for img_name in os.listdir(dir_path):
     img = img.convert('RGB')
     img = transformations(img)
     img = torch.autograd.Variable(torch.unsqueeze(img, dim=0).float(), requires_grad=False)
-    code = (torch.sign(model(img)) > 0).type(torch.LongTensor).numpy().tolist()
-    code = code[0]
+    continuous_code = model(img).data.numpy().tolist()[0]
+    discrete_code = (torch.sign(model(img).data) > 0).type(torch.LongTensor).numpy().tolist()[0]
+    origincode = ''
     hashcode = ''
-    for bit in code:
+    for i in range(len(continuous_code)):
+        if i == 0:
+            origincode = origincode + str(continuous_code[i])
+        else:
+            origincode = origincode + ' ' + str(continuous_code[i])
+    for bit in discrete_code:
         hashcode = hashcode + str(bit)
-    image_code = [hashcode]
+    image_code = [hashcode, origincode]
     for i in range(6):
         sucode = hashcode[i * 8:i * 8 + 8]
         image_code.append(sucode)
     image_codes.append(image_code)
 data = image_codes
-columns = ['hashcode', 'subcode1', 'subcode2', 'subcode3', 'subcode4', 'subcode5', 'subcode6']
+columns = ['hashcode', 'origincode', 'subcode1', 'subcode2', 'subcode3', 'subcode4', 'subcode5', 'subcode6']
 df = pd.DataFrame(columns=columns, data=data)
 df.to_csv('image_code.csv', header=False, index=False)

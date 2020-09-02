@@ -30,12 +30,21 @@ def get_query_code():
     image = Image.open(io.BytesIO(image))
     image = transformations(image)
     image = torch.autograd.Variable(torch.unsqueeze(image, dim=0).float(), requires_grad=False)
-    code = (torch.sign(model(image)) > 0).type(torch.LongTensor).numpy().tolist()
-    code = code[0]
+    continuous_code = model(image).data.numpy().tolist()[0]
+    discrete_code = (torch.sign(model(image).data) > 0).type(torch.LongTensor).numpy().tolist()[0]
+    origincode = ''
     hashcode = ''
-    for bit in code:
+    for i in range(len(continuous_code)):
+        if i == 0:
+            origincode = origincode + str(continuous_code[i])
+        else:
+            origincode = origincode + ',' + str(continuous_code[i])
+    for bit in discrete_code:
         hashcode = hashcode + str(bit)
-    return hashcode
+    return {
+        'hashcode': hashcode,
+        'origincode': origincode
+    };
 
 
 if __name__ == "__main__":
